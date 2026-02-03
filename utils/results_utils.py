@@ -457,7 +457,7 @@ def generate_statistics_obj(
             "method": method,
             "algorithm": algorithm,
             "num_solutions": objetivos.shape[0],
-            "lexicographic_optimum": f"({', '.join(str(int(x)) for x in ideal)})",
+            "ideal": f"({', '.join(str(int(x)) for x in ideal)})",
             "nadir": f"({', '.join(str(int(x)) for x in ref_point)})",
             "hypervolume": hipervolumen,
             "normalized_hypervolume": np.round(hv_normalized, 2),
