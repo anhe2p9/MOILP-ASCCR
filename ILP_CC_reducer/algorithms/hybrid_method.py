@@ -162,7 +162,6 @@ def hybrid_method_with_full_p_split(model: pyo.AbstractModel, data_dict, objecti
                                                               start_total, remaining_time)
 
         if solution:
-            finding_solution_time = time.time() - start_total
             solutions_set.add(solution)  # Add solution to solutions set
             print(f"New solution found: {solution}.")
 
