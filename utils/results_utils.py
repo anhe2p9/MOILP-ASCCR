@@ -437,6 +437,8 @@ def generate_statistics_obj(
         hv_max = hv.do(ideal)
         hv_normalized = hipervolumen / hv_max
 
+        algorithm = "Unknown"
+
         if "_" in class_method:
             clase, method = class_method.rsplit("_", 1)
             parts = clase.split("_", 2)

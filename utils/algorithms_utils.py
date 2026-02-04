@@ -257,7 +257,7 @@ def writerow_complete_data_info(concrete: pyo.ConcreteModel, results, data,
         """ Solution """
         complete_data_row.append(solution)
 
-        """  """
+        """ Information about the solution """
         solution_info = [concrete.x[s].index() for s in concrete.S if concrete.x[s].value == 1 and s != 0]
         complete_data_row.append([(concrete.x[s].index(),
                                    round(pyo.value(concrete.nmcc[s] - sum(concrete.ccr[j, s] * concrete.z[j, s]
