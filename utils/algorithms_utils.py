@@ -257,8 +257,7 @@ def writerow_complete_data_info(concrete: pyo.ConcreteModel, results, data,
         """ Solution """
         complete_data_row.append(solution)
 
-        """ Information about the solution """
-        solution_info = [concrete.x[s].index() for s in concrete.S if concrete.x[s].value == 1 and s != 0]
+        """ Information about the solution (index, CC, LOC) """
         complete_data_row.append([(concrete.x[s].index(),
                                    round(pyo.value(concrete.nmcc[s] - sum(concrete.ccr[j, s] * concrete.z[j, s]
                                                                           for j,k in concrete.N if k == s))),
@@ -270,6 +269,7 @@ def writerow_complete_data_info(concrete: pyo.ConcreteModel, results, data,
         df_csv = pd.read_csv(data["offsets"], header=None, names=["index", "start", "end"])
 
         # Filter by index in solution str list and obtain values
+        solution_info = [concrete.x[s].index() for s in concrete.S if concrete.x[s].value == 1 and s != 0]
         solution_str = [str(i) for i in solution_info]
         offsets_list = df_csv[df_csv["index"].isin(solution_str)][["start", "end"]].values.tolist()
 

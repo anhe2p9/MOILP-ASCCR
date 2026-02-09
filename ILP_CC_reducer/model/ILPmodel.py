@@ -52,7 +52,7 @@ class GeneralILPmodel(pyo.AbstractModel):
     
     @staticmethod
     def extractions_objective(m):
-        return sum(m.x[j] for j in m.S)
+        return sum(m.x[j] for j in m.S if j!=0)
 
     @staticmethod
     def loc_difference_objective(m):
