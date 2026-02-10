@@ -108,7 +108,7 @@ if __name__ == "__main__":
         if args.output_folder:
             output_folder = args.output_folder
         else:
-            output_folder = input_path
+            output_folder = input_path.parent
 
         if file_class is not None and file_method is not None:
             output_dir = (
