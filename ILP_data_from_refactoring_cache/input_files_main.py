@@ -105,11 +105,16 @@ if __name__ == "__main__":
 
         file_class, file_method = extract_class_method(file_name)
 
+        if args.output_folder:
+            output_folder = args.output_folder
+        else:
+            output_folder = input_path
+
         if file_class is not None and file_method is not None:
             output_dir = (
                 base_dir
                 / "original_code_data"
-                / args.output_folder
+                / output_folder
                 / file_class
                 / file_method
             )
