@@ -35,23 +35,16 @@ def main(path_to_refactoring_cache: str, output_folder: str, files_n: str):
     
 def extract_class_method(file_name):
     """
-       Extracts:
-         - class_name: folder-package-class
-         - method_name: method-line
-       from the format:
-         project@folder-package-clasa-method-line
-       """
-    match = re.search(
-        r'@(.+?)-([^-]+)-(\d+)\.csv$',
-        file_name
-    )
-
+    Extracts:
+      - class_name: everything up to '.java' (included)
+      - method_name: everything after the last '-' before '.csv'
+    """
+    match = re.match(r'(.+\.java)-(.+)\.csv$', file_name)
     if not match:
         return None, None
 
-    class_name = match.group(1)  # folder-package-class
-    method_name = f"{match.group(2)}-{match.group(3)}"  # method-line
-
+    class_name = match.group(1)  # up to .java
+    method_name = match.group(2)  # after the last -
     return class_name, method_name
 
 
