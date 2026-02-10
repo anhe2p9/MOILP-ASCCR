@@ -1,12 +1,13 @@
 import sys
 import os
+
 # Add base directory to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Import the required libraries
 from ILP_data_from_refactoring_cache.utils import dataset as dataset, refactoring_cache as rc
 import argparse
-
+import zipfile
 from pathlib import Path
 import re
 
@@ -32,55 +33,99 @@ def main(path_to_refactoring_cache: str, output_folder: str, files_n: str):
     
     
     
-def extraer_clase_metodo(nombre_archivo):
-    
-    class_match = re.search(r'ILP-(.*)\.([^.]+)\.csv$', nombre_archivo)
-    
-    if class_match:
-        class_name = class_match.group(1)  # Gets the part between the second "-" and before method name
-    else:
-        class_name = None
+def extract_class_method(file_name):
+    """
+       Extracts:
+         - class_name: folder-package-class
+         - method_name: method-line
+       from the format:
+         project@folder-package-clasa-method-line
+       """
+    match = re.search(
+        r'@(.+?)-([^-]+)-(\d+)\.csv$',
+        file_name
+    )
 
-    
-    method_match = re.search(r'\.([^\.]+)\.csv$', nombre_archivo)
-    
-    if method_match:
-        method_name =  method_match.group(1)  # Captura el texto entre el último punto y ".csv"
-    else:
-        method_name =  None  # Si no coincide el formato esperado
+    if not match:
+        return None, None
 
-    
-    
-    if class_name and method_name:
-        return class_name, method_name
-    return None, None
+    class_name = match.group(1)  # folder-package-class
+    method_name = f"{match.group(2)}-{match.group(3)}"  # method-line
+
+    return class_name, method_name
+
 
 
 
 # Call the main function
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process refactoring cache and output results.')
-    parser.add_argument('--input', dest='input_folder', type=str, help='Path to the refactoring cache CSV file')
-    parser.add_argument('--output', dest='output_folder', type=str, help='Folder to save the output CSV files')
+    parser.add_argument('--input', dest='input_path', type=str,
+                        help='Path to input folder or zip file')
+    parser.add_argument('--output', dest='output_folder', type=str,
+                        help='Folder to save the output CSV files')
     args = parser.parse_args()
-    
-    input_folder = Path(args.input_folder)
-    
-    for file in input_folder.iterdir():
-        file_class, file_method = extraer_clase_metodo(str(file))
-        # print(f"Clase: {file_class}, Método: {file_method}")
-    
-        # Base directory of the project
-        base_dir = Path(__file__).resolve().parent.parent
-        
+
+    input_path = Path(args.input_path)
+
+    # Base directory of the project
+    base_dir = Path(__file__).resolve().parent.parent
+
+    # -------- CASE 1: INPUT IS A FOLDER --------
+    if input_path.is_dir():
+        files_iter = (f for f in input_path.iterdir() if f.is_file())
+        zip_file = None
+
+    # -------- CASE 2: INPUT IS A ZIP --------
+    elif zipfile.is_zipfile(input_path):
+        zip_file = zipfile.ZipFile(input_path, 'r')
+        files_iter = (
+            f for f in zip_file.namelist()
+            if not f.endswith('/')
+               and not f.startswith('__MACOSX/')
+        )
+
+    else:
+        raise ValueError(f"Input path is neither a folder nor a zip file: {input_path}")
+
+    # -------- COMMON PROCESSING --------
+    for file in files_iter:
+
+        # Folder → Path object
+        if zip_file is None:
+            file_name = file.name
+            file_ref = file  # Path, as before
+
+        # Zip → string inside the zip
+        else:
+            if file.endswith('/'):
+                continue  # skip directories inside zip
+            file_name = Path(file).name
+            file_ref = file  # name inside zip
+
+        file_class, file_method = extract_class_method(file_name)
+
         if file_class is not None and file_method is not None:
-            # Build Path
-            output_dir = base_dir / "original_code_data" / args.output_folder / file_class / file_method
-            
-            # Create folder if it does not exists
+            output_dir = (
+                base_dir
+                / "original_code_data"
+                / args.output_folder
+                / file_class
+                / file_method
+            )
+
             output_dir.mkdir(parents=True, exist_ok=True)
             print(f"Processing {file_class} class, and {file_method} method.")
-        
-            main(file, str(output_dir), file_method)
-            print(f"New data is available in: {output_dir}")
 
+            # Folder vs zip handling for main()
+            if zip_file is None:
+                main(file_ref, str(output_dir), file_method)
+            else:
+                with zip_file.open(file_ref) as f:
+                    main(f, str(output_dir), file_method)
+
+            print(f"New data is available in: {output_dir}")
+            print(f"--------------------------------------------------------------------------------------------")
+
+    if zip_file is not None:
+        zip_file.close()
