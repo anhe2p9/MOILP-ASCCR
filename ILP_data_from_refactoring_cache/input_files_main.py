@@ -94,65 +94,55 @@ if __name__ == "__main__":
         # Folder → Path object
         if zip_file is None:
             file_name = file.name
-            file_ref = file  # Path, as before
-
-        # Zip → string inside the zip
+            file_ref = file
         else:
             if file.endswith('/'):
-                continue  # skip directories inside zip
+                continue
             file_name = Path(file).name
-            file_ref = file  # name inside zip
+            file_ref = file
 
-        file_class, file_method = extract_class_method(file_name)
+        # -----------------------------
+        # EXTRACT project_name, class and method
+        # -----------------------------
+        if '@' in file_name:
+            project_name, rest = file_name.split('@', 1)
+        else:
+            project_name = "unknown_project"
+            rest = file_name
 
-        # Determine contents folder for results
+        file_class, file_method = extract_class_method(rest)
+
+        if file_class is None or file_method is None:
+            print(f"Skipping file (pattern mismatch): {file_name}")
+            continue
+
+        # -----------------------------
+        # Folder containing refactoring caches
+        # -----------------------------
         if args.output_folder:
             output_base = Path(args.output_folder)
         else:
-            # Folder for input + subfolder 'results'
             if input_path.is_file():
                 output_base = input_path.parent / "original_code_data_new"
             else:
                 output_base = input_path / "original_code_data_new"
 
-        # Make sure that it exists
         output_base.mkdir(parents=True, exist_ok=True)
 
-        print(f"All results will be saved in: {output_base}")
+        # -----------------------------
+        # Final folder: <original_code_data_new>/<project_name>/<class>/<method>/<data>
+        # -----------------------------
+        output_dir = output_base / project_name / file_class / file_method
+        output_dir.mkdir(parents=True, exist_ok=True)
 
-        # -------- COMMON PROCESSING --------
-        for file in files_iter:
+        print(f"Processing {project_name} / {file_class} / {file_method}")
 
-            # Folder → Path object
-            if zip_file is None:
-                file_name = file.name
-                file_ref = file  # Path, as before
+        # Folder vs zip handling for main()
+        if zip_file is None:
+            main(file_ref, str(output_dir), file_method)
+        else:
+            with zip_file.open(file_ref) as f:
+                main(f, str(output_dir), file_method)
 
-            # Zip → string inside the zip
-            else:
-                if file.endswith('/'):
-                    continue  # skip directories inside zip
-                file_name = Path(file).name
-                file_ref = file  # name inside zip
-
-            file_class, file_method = extract_class_method(file_name)
-
-            if file_class is None or file_method is None:
-                print(f"Skipping file (pattern mismatch): {file_name}")
-                continue
-
-            # Build output directory inside the container folder
-            output_dir = output_base / file_class / file_method
-            output_dir.mkdir(parents=True, exist_ok=True)
-
-            print(f"Processing {file_class} class, and {file_method} method.")
-
-            # Folder vs zip handling for main()
-            if zip_file is None:
-                main(file_ref, str(output_dir), file_method)
-            else:
-                with zip_file.open(file_ref) as f:
-                    main(f, str(output_dir), file_method)
-
-            print(f"New data is available in: {output_dir}")
-            print("--------------------------------------------------------------------------------------------")
+        print(f"New data is available in: {output_dir}")
+        print("--------------------------------------------------------------------------------------------")
