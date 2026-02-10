@@ -111,9 +111,9 @@ if __name__ == "__main__":
         else:
             # Folder for input + subfolder 'results'
             if input_path.is_file():
-                output_base = input_path.parent / "results"
+                output_base = input_path.parent / "original_code_data_new"
             else:
-                output_base = input_path / "results"
+                output_base = input_path / "original_code_data_new"
 
         # Make sure that it exists
         output_base.mkdir(parents=True, exist_ok=True)
