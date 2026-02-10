@@ -1,5 +1,7 @@
 import sys
 import os
+import time
+import concurrent.futures
 
 # Add base directory to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -10,6 +12,8 @@ import argparse
 import zipfile
 from pathlib import Path
 import re
+
+TIMEOUT_SECONDS = 2 * 60 * 60
 
 # Main function
 def main(path_to_refactoring_cache: str, output_folder: str, files_n: str):
@@ -130,12 +134,28 @@ if __name__ == "__main__":
 
         print(f"Processing {project_name} / {file_class} / {file_method}")
 
-        # Folder vs zip handling for main()
-        if zip_file is None:
-            main(file_ref, str(output_dir), file_method)
-        else:
-            with zip_file.open(file_ref) as f:
-                main(f, str(output_dir), file_method)
+        try:
+            # Ejecutamos main() con timeout
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(
+                    main,
+                    file_ref if zip_file is None else zip_file.open(file_ref),
+                    str(output_dir),
+                    file_method
+                )
+                # Esperamos como máximo TIMEOUT_SECONDS
+                future.result(timeout=TIMEOUT_SECONDS)
+
+            print(f"Finished processing: {file_name}")
+
+        except concurrent.futures.TimeoutError:
+            print(f"Timeout reached for {file_name} (>{TIMEOUT_SECONDS / 3600}h). Skipping to next instance.")
+
+            # Cerrar el fichero si viene de un zip
+        if zip_file is not None and not zip_file.open(file_ref).closed:
+            zip_file.open(file_ref).close()
 
         print(f"New data is available in: {output_dir}")
         print("--------------------------------------------------------------------------------------------")
+
+
