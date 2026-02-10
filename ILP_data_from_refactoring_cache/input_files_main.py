@@ -105,21 +105,46 @@ if __name__ == "__main__":
 
         file_class, file_method = extract_class_method(file_name)
 
+        # Determine contents folder for results
         if args.output_folder:
-            output_folder = args.output_folder
+            output_base = Path(args.output_folder)
         else:
-            output_folder = input_path.parent
+            # Folder for input + subfolder 'results'
+            if input_path.is_file():
+                output_base = input_path.parent / "results"
+            else:
+                output_base = input_path / "results"
 
-        if file_class is not None and file_method is not None:
-            output_dir = (
-                base_dir
-                / "original_code_data"
-                / output_folder
-                / file_class
-                / file_method
-            )
+        # Make sure that it exists
+        output_base.mkdir(parents=True, exist_ok=True)
 
+        print(f"All results will be saved in: {output_base}")
+
+        # -------- COMMON PROCESSING --------
+        for file in files_iter:
+
+            # Folder → Path object
+            if zip_file is None:
+                file_name = file.name
+                file_ref = file  # Path, as before
+
+            # Zip → string inside the zip
+            else:
+                if file.endswith('/'):
+                    continue  # skip directories inside zip
+                file_name = Path(file).name
+                file_ref = file  # name inside zip
+
+            file_class, file_method = extract_class_method(file_name)
+
+            if file_class is None or file_method is None:
+                print(f"Skipping file (pattern mismatch): {file_name}")
+                continue
+
+            # Build output directory inside the container folder
+            output_dir = output_base / file_class / file_method
             output_dir.mkdir(parents=True, exist_ok=True)
+
             print(f"Processing {file_class} class, and {file_method} method.")
 
             # Folder vs zip handling for main()
@@ -130,7 +155,4 @@ if __name__ == "__main__":
                     main(f, str(output_dir), file_method)
 
             print(f"New data is available in: {output_dir}")
-            print(f"--------------------------------------------------------------------------------------------")
-
-    if zip_file is not None:
-        zip_file.close()
+            print("--------------------------------------------------------------------------------------------")
