@@ -14,6 +14,10 @@ import os
 import re
 import os.path
 
+import zipfile
+import tempfile
+import shutil
+
 from ILP_CC_reducer.model.ILPmodel import GeneralILPmodel
 model = GeneralILPmodel(active_objectives=["extractions", "cc", "loc"])
 
@@ -638,14 +642,57 @@ def generate_global_relative_hv_vs_time(
         ("HybridMethodAlgorithm", 3): []
     }
 
+    # ----------------------------------------------------------
+    # NORMALIZE results_root
+    # ----------------------------------------------------------
+
+    temp_dir = None  # in case that zip has to be extracted
+    original_input_path = results_root  # save que original input to decide whrer to save PDFs
+
+    if results_root.endswith(".zip"):
+        print(f"Extracting zip {results_root}.")
+        temp_dir = tempfile.mkdtemp()
+        with zipfile.ZipFile(results_root, 'r') as z:
+            z.extractall(temp_dir)
+        results_root = temp_dir  # results_root points to the temporary folder
+
+    # Search "results" folder at any level
+    def find_results_folder(root_path: str) -> str | None:
+        for current_root, dirs, files in os.walk(root_path):
+            for d in dirs:
+                if d.lower() == "results":
+                    return os.path.join(current_root, d)
+        return None
+
+    # If folder is not called "results", then search recursively
+    if os.path.basename(os.path.normpath(results_root)).lower() != "results":
+        found = find_results_folder(results_root)
+        if found:
+            print(f"Found results folder at {found}")
+            results_root = found
+        else:
+            # If results not found, use extracted folder .zip or the original folder
+            print("No 'results' folder found. Using original folder.")
+            results_root = temp_dir if temp_dir else results_root
+
+    # Save always at the same level that the original input
+    if output_dir is None:
+        output_dir = os.path.dirname(os.path.abspath(original_input_path))
+
+    os.makedirs(output_dir, exist_ok=True)
+
     # ---------- Browse through all folders ----------
     for project in os.listdir(results_root):
         project_path = os.path.join(results_root, project)
+
+        print(f"Project path: {project_path}.")
         if not os.path.isdir(project_path):
             continue
 
         for solution_folder in os.listdir(project_path):
             solution_path = os.path.join(project_path, solution_folder)
+
+            print(f"Solution path: {solution_path}.")
             if not os.path.isdir(solution_path):
                 continue
 
@@ -691,7 +738,7 @@ def generate_global_relative_hv_vs_time(
                         continue
 
                     # Compute relative HV
-                    hv_rel = hv_abs / hv_abs[-1]  # normalize HV so last is 1
+                    hv_rel = hv_abs / hv_max  # normalize HV so last is 1
 
                     # Normalize time to relative [0,1]
                     duration = times[-1] - times[0]
@@ -709,10 +756,13 @@ def generate_global_relative_hv_vs_time(
 
                 except Exception as e:
                     print(f"Error processing {csv_path}: {e}")
+            print("-----------------------------------------------------------------------------------------------")
 
     # ---------- Generate HV plots ----------
     if output_dir is None:
-        output_dir = results_root
+        # Save at the same level as results_root
+        output_dir = os.path.dirname(os.path.abspath(results_root))
+
     os.makedirs(output_dir, exist_ok=True)
 
     # Individual plots per algorithm and number of objectives
@@ -721,9 +771,11 @@ def generate_global_relative_hv_vs_time(
             continue
 
         plt.figure(figsize=(8, 5))
-        hv_mean = np.mean(hv_list, axis=0)
+        # hv_mean = np.mean(hv_list, axis=0)
+        hv_median = np.percentile(hv_list, 50, axis=0)
+        plt.plot(t_interp, hv_median, color="blue")
         t_interp = np.linspace(0, 1, interpolation_points)
-        plt.plot(t_interp, hv_mean, color="blue")
+        plt.plot(t_interp, hv_median, color="blue")
         plt.xlabel("Relative Time")
         plt.ylabel("Average Relative HV")
         plt.ylim(0, 1.05)
@@ -747,8 +799,18 @@ def generate_global_relative_hv_vs_time(
                 continue
             # Average over all executions at each relative time point
             hv_mean = np.mean(hv_list, axis=0)
+            # hv_median = np.percentile(hv_list, 50, axis=0)
             t_interp = np.linspace(0, 1, interpolation_points)
             plt.plot(t_interp, hv_mean, label=algorithm)
+
+            # hv_array = np.array(hv_list)  # shape: (num_instancias, interpolation_points)
+            # hv_25 = np.percentile(hv_array, 25, axis=0)
+            # hv_75 = np.percentile(hv_array, 75, axis=0)
+            # hv_std = np.std(hv_array, axis=0)
+
+            # color = "blue" if "Epsilon" in algorithm else "orange"
+            # plt.fill_between(t_interp, hv_25, hv_75, color=color, alpha=0.2)  # sombra
+            # plt.fill_between(t_interp, hv_mean - hv_std, hv_mean + hv_std, color=color, alpha=0.2)
 
         plt.xlabel("Relative Time")
         plt.ylabel("Average Relative HV")
@@ -760,6 +822,10 @@ def generate_global_relative_hv_vs_time(
         filename = f"Comparison_algorithms_{num_obj}obj_relative_hv_vs_time.pdf"
         plt.savefig(os.path.join(output_dir, filename))
         plt.close()
+
+    # Clean temporary folder if it was created
+    if temp_dir is not None:
+        shutil.rmtree(temp_dir)
 
     print(f"Relative HV plots correctly saved in {output_dir}.")
 

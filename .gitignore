@@ -230,7 +230,7 @@ relacionado_con_tres_casos_no_procesados/
 resultado.prof
 Ayesa_lanzar_docker_metodos.sh
 renamed_refactored_Ayesa_code/
-LOC_and_CC_comparison.py
+results_scripts/LOC_and_CC_comparison.py
 results_boxplots.py
 MOILP_output.zip
 cambiar_columna_results.sh
@@ -238,4 +238,6 @@ MOILP_output.zip
 files.zip
 original_code_data_new
 original_code_data_new_extractions_results.csv
-results_booxplots.py
+results_scripts/results_boxplots_ILPvsMOILP.py
+results_scripts/execution_time_boxplots.py
+results_scripts
