@@ -926,8 +926,10 @@ def generate_comparative_plots_per_project(all_data, output_dir: str, algorithm_
     rows = 2
     cols = 5
     rows = math.ceil(num_projects / cols)
-    fig, axes = plt.subplots(rows, cols, figsize=(20, 3 * rows))
+    fig, axes = plt.subplots(rows, cols, figsize=(20, 3.5 * rows))
     axes = axes.flatten()
+
+    handles_dict = {}
 
     for i, project in enumerate(projects):
         ax = axes[i]
@@ -947,7 +949,10 @@ def generate_comparative_plots_per_project(all_data, output_dir: str, algorithm_
                     continue
                 hv_mean = np.mean(hv_list, axis=0)
                 t_interp = project_data.iloc[0]["t_rel"]
-                ax.plot(t_interp, hv_mean, label=f"{algorithm_labels.get(algorithm, algorithm)}", linewidth=2)
+                line, = ax.plot(t_interp, hv_mean, label=f"{algorithm_labels.get(algorithm, algorithm)}", linewidth=2)
+
+                if algorithm not in handles_dict:
+                    handles_dict[algorithm] = line
 
         ax.set_title(project_labels.get(project, project), fontsize=24)
         ax.set_facecolor('#f9f9f9')
@@ -958,16 +963,31 @@ def generate_comparative_plots_per_project(all_data, output_dir: str, algorithm_
         ax.tick_params(axis='y', labelsize=16)
         ax.tick_params(axis='x', labelsize=16)
         ax.grid(True, linestyle='--', alpha=0.3)
-        legend = ax.legend(frameon=True, facecolor='white', edgecolor='gray', fontsize=12)
-        legend.get_frame().set_alpha(0.8)
-        legend.get_frame().set_linewidth(0.5)
 
     # eliminar ejes sobrantes si hay menos proyectos que subplots
     for j in range(i + 1, len(axes)):
         fig.delaxes(axes[j])
 
-    plt.tight_layout()
-    plt.savefig(os.path.join(output_dir, "all_projects_HV_comparison.pdf"))
+    fig.subplots_adjust(bottom=0.12)
+
+    legend = fig.legend(
+        handles=handles_dict.values(),
+        labels=[algorithm_labels.get(a, a) for a in handles_dict.keys()],
+        loc='lower center',
+        bbox_to_anchor=(0.5, 0.02),
+        bbox_transform=fig.transFigure,
+        ncol=len(handles_dict),
+        frameon=True,
+        facecolor='white',
+        edgecolor='gray',
+        fontsize=12
+    )
+
+    legend.get_frame().set_alpha(0.8)
+    legend.get_frame().set_linewidth(0.5)
+
+    plt.tight_layout(rect=[0, 0.09, 0.9, 1.1])
+    plt.savefig(os.path.join(output_dir, "all_projects_HV_comparison.pdf"), bbox_inches='tight')
     plt.close()
 
     print(f"Comparative relative HV plots PER PROJECT correctly saved in {output_dir}.")
