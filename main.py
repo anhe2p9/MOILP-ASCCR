@@ -90,7 +90,7 @@ def main_one_obj(alg_name: str, instance_path: Path=None, tau: int=15, objective
                     with open(csv_path, mode='a', newline='', encoding='utf-8') as f:
                         writer = csv.writer(f)
                         writer.writerow(results_csv)
-                    print("Added line successfully.")
+                    print(f"Added line successfully to {csv_path}.")
 
     if solve_model:
         print(f"CSV file with results for one objective correctly saved in {csv_path}.")
