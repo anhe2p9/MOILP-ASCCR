@@ -241,3 +241,4 @@ original_code_data_new_extractions_results.csv
 results_scripts/results_boxplots_ILPvsMOILP.py
 results_scripts/execution_time_boxplots.py
 results_scripts
+metodos_muy_pesados_data/
