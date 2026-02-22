@@ -296,7 +296,7 @@ def e_constraint_3objs(data_dict: dict, tau: int, objectives_list: list, model: 
         for i in reversed(range(ul_point[1], ub_point[1] + 1)):  # gridpoints f2
             j = ub_point[2]
 
-            while j > ul_point[2] and remaining_time >= 0:
+            while j >= ul_point[2] and remaining_time >= 0:
 
                 e_const = [i,j]
                 print("=====================================")
@@ -367,7 +367,7 @@ def e_constraint_3objs(data_dict: dict, tau: int, objectives_list: list, model: 
                     output_data_writer.write(
                         "======================================================================================")
 
-                    j = ul_point[2]
+                    j = ul_point[2] - 1
 
                 remaining_time = time_limit - (time.time() - start_total)
 
