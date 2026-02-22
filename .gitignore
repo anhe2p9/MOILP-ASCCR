@@ -242,3 +242,5 @@ results_scripts/results_boxplots_ILPvsMOILP.py
 results_scripts/execution_time_boxplots.py
 results_scripts
 metodos_muy_pesados_data/
+build_settings_menu_data/
+metodos_muy_pesados_data_extractions_results.csv
