@@ -164,7 +164,7 @@ def generate_parallel_coordinates_plot(results_path, output_pdf_path):
         # Dibujo
         plt.xticks(ticks=x, labels=x_labels, fontsize=18)
         plt.ylabel(r'Objectives values', fontsize=18)
-        plt.xlabel(r'Objetives to minimize', fontsize=18)
+        plt.xlabel(r'Objectives to minimize', fontsize=18)
         plt.legend([], [], frameon=False)  # Quita la leyenda si hay muchas soluciones
         plt.legend(title=r'Solution', bbox_to_anchor=(1.05, 1), loc='upper left', fontsize='small')
         plt.grid(True)
