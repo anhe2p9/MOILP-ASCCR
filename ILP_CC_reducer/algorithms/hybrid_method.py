@@ -165,7 +165,16 @@ def hybrid_method_with_full_p_split(model: pyo.AbstractModel, data_dict, objecti
             solutions_set.add(solution)  # Add solution to solutions set
             print(f"New solution found: {solution}.")
 
-            results_writer.writerow(solution)
+            results_file.seek(0)
+            results_file.truncate()
+
+            # Rewrite the header
+            results_writer.writerow([obj.__name__ for obj in objectives_list])
+
+            # Rewrite the set
+            for sol in sorted(solutions_set):
+                results_writer.writerow(sol)
+
             results_file.flush()
 
             output_data_writer.write(f"CPLEX time: {cplex_time}.\n")
