@@ -189,8 +189,9 @@ def hybrid_method_with_full_p_split(model: pyo.AbstractModel, data_dict, objecti
             # Split the box with the real solution found
             boxes = full_p_split(actual_box, solution, boxes)
 
-            for i,box in enumerate(boxes):
+            for i,box in enumerate(boxes.copy()):
                 if inside(solution,box):
+                    print(f"        Solution: {solution} inside box: {box}.")
                     boxes.pop(i)
                     boxes = full_p_split(box, solution, boxes)
 
