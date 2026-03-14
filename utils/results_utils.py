@@ -835,7 +835,10 @@ def generate_global_relative_hv_vs_time(
     individual_plot_per_algorithm(curves, interpolation_points, colors, linewidth, output_dir)
     comparative_plot_per_algorithm(curves, interpolation_points, colors, linewidth,
                                    output_dir, algorithm_labels)
-    generate_comparative_plots_per_project(all_data, output_dir, algorithm_labels, project_labels)
+
+    all_data_no_ayesa = all_data[all_data["project"] != "Ayesa_data"]
+    generate_comparative_plots_per_project(all_data_no_ayesa, output_dir, algorithm_labels, project_labels)
+
     generate_comparative_plot_Ayesa(all_data, output_dir, algorithm_labels)
 
     # Clean temporary folder if it was created
@@ -947,6 +950,7 @@ def generate_comparative_plots_per_project(all_data, output_dir: str, algorithm_
                 hv_list = [row for row in filtered_data["hv_rel"] if len(row) > 0 and row[0] != 1]
                 if not hv_list:
                     continue
+                hv_list = [np.array(hv, dtype=float) for hv in hv_list]
                 hv_mean = np.mean(hv_list, axis=0)
                 t_interp = project_data.iloc[0]["t_rel"]
                 line, = ax.plot(t_interp, hv_mean, label=f"{algorithm_labels.get(algorithm, algorithm)}", linewidth=2)
