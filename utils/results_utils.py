@@ -806,9 +806,12 @@ def generate_global_relative_hv_vs_time(
 
             curves[(alg, n_obj)] = hv_list
 
+    e_constraint_color = "#110EC7"
+    hybrid_method_color = "#AC0EC7"
+
     colors = {
-        "EpsilonConstraintAlgorithm": "#1f77b4",
-        "HybridMethodAlgorithm": "#ff7f0e"
+        "EpsilonConstraintAlgorithm": e_constraint_color,
+        "HybridMethodAlgorithm": hybrid_method_color
     }
 
     project_labels = {
@@ -830,6 +833,16 @@ def generate_global_relative_hv_vs_time(
         "EpsilonConstraintAlgorithm": "AUGMECON"
     }
 
+    line_styles = {
+        "EpsilonConstraintAlgorithm": "-",
+        "HybridMethodAlgorithm": "--"
+    }
+
+    markers = {
+        "EpsilonConstraintAlgorithm": "o",
+        "HybridMethodAlgorithm": "*"
+    }
+
     linewidth = 2
 
     individual_plot_per_algorithm(curves, interpolation_points, colors, linewidth, output_dir)
@@ -837,15 +850,141 @@ def generate_global_relative_hv_vs_time(
                                    output_dir, algorithm_labels)
 
     all_data_no_ayesa = all_data[all_data["project"] != "Ayesa_data"]
-    generate_comparative_plots_per_project(all_data_no_ayesa, output_dir, algorithm_labels, project_labels)
+    generate_comparative_plots_per_project(all_data_no_ayesa, output_dir, colors,
+                                           markers, line_styles, algorithm_labels, project_labels)
 
-    generate_comparative_plot_Ayesa(all_data, output_dir, algorithm_labels)
+    generate_comparative_plot_Ayesa(all_data, output_dir, colors, markers, line_styles, algorithm_labels)
 
     # Clean temporary folder if it was created
     if temp_dir is not None:
         shutil.rmtree(temp_dir)
 
     print(f"ALL relative HV plots correctly saved in {output_dir}.")
+
+
+def generate_comparative_plots_per_project(all_data, output_dir: str, colors: dict,
+                                           markers: dict, lines_styles: dict,
+                                           algorithm_labels: dict, project_labels):
+    projects = all_data["project"].unique()
+    num_projects = len(projects)
+    rows = 2
+    cols = 5
+    rows = math.ceil(num_projects / cols)
+    fig, axes = plt.subplots(rows, cols, figsize=(20, 3.5 * rows))
+    axes = axes.flatten()
+
+    handles_dict = {}
+
+    for i, project in enumerate(projects):
+        ax = axes[i]
+        project_data = all_data[all_data["project"] == project]
+
+        for num_obj in (2, 3):
+            for algorithm in ["EpsilonConstraintAlgorithm", "HybridMethodAlgorithm"]:
+                # seleccionar las filas que cumplan condiciones
+                filtered_data = project_data[
+                    (project_data["algorithm"] == algorithm) &
+                    (project_data["num_obj"] == num_obj)
+                    ]
+
+                # construir lista de hv_rel filtrando listas cuyo primer elemento sea 1
+                hv_list = [row for row in filtered_data["hv_rel"] if len(row) > 0 and row[0] != 1]
+                if not hv_list:
+                    continue
+                hv_list = [np.array(hv, dtype=float) for hv in hv_list]
+                hv_mean = np.mean(hv_list, axis=0)
+                t_interp = project_data.iloc[0]["t_rel"]
+                line, = ax.plot(
+                    t_interp,
+                    hv_mean,
+                    label=f"{algorithm_labels.get(algorithm, algorithm)}",
+                    linewidth=2,
+                    color=colors.get(algorithm),
+                    linestyle=lines_styles.get(algorithm, "-"),
+                    marker=markers.get(algorithm),
+                    markevery=15
+                )
+
+                if algorithm not in handles_dict:
+                    handles_dict[algorithm] = line
+
+        ax.set_title(project_labels.get(project, project), fontsize=24)
+        ax.set_facecolor('#f9f9f9')
+        ax.grid(True, color='gray', linestyle='--', linewidth=0.5, alpha=0.3)
+        ax.set_xlabel("Relative Time", fontsize=20)
+        ax.set_ylabel("Average Relative HV", fontsize=20)
+        ax.set_ylim(0, 1.05)
+        ax.tick_params(axis='y', labelsize=16)
+        ax.tick_params(axis='x', labelsize=16)
+        ax.grid(True, linestyle='--', alpha=0.3)
+
+    # eliminar ejes sobrantes si hay menos proyectos que subplots
+    for j in range(i + 1, len(axes)):
+        fig.delaxes(axes[j])
+
+    fig.subplots_adjust(bottom=0.12)
+
+    legend = fig.legend(
+        handles=handles_dict.values(),
+        labels=[algorithm_labels.get(a, a) for a in handles_dict.keys()],
+        loc='lower center',
+        bbox_to_anchor=(0.5, 0.02),
+        bbox_transform=fig.transFigure,
+        ncol=len(handles_dict),
+        frameon=True,
+        facecolor='white',
+        edgecolor='gray',
+        fontsize=12
+    )
+
+    legend.get_frame().set_alpha(0.8)
+    legend.get_frame().set_linewidth(0.5)
+
+    plt.tight_layout(rect=[0, 0.09, 0.9, 1.1])
+    plt.savefig(os.path.join(output_dir, "open_source_projects_HV_comparison.pdf"), bbox_inches='tight')
+    plt.close()
+
+    print(f"Comparative relative HV plots PER PROJECT correctly saved in {output_dir}.")
+
+
+def generate_comparative_plot_Ayesa(all_data, output_dir: str, colors: dict,
+                                    markers: dict, lines_styles: dict, algorithm_labels: dict):
+    project_name = "Ayesa_data"
+    proj_data = all_data[all_data["project"] == project_name]
+
+    plt.figure(figsize=(10, 6))
+    ax = plt.gca()
+    for algorithm in ["EpsilonConstraintAlgorithm", "HybridMethodAlgorithm"]:
+        hv_list = [row for row in proj_data[proj_data["algorithm"] == algorithm]["hv_rel"]]
+        if not hv_list:
+            continue
+        hv_mean = np.mean(hv_list, axis=0)
+        t_interp = proj_data.iloc[0]["t_rel"]
+        plt.plot(
+            t_interp,
+            hv_mean,
+            label=f"{algorithm_labels.get(algorithm, algorithm)}",
+            linewidth=2,
+            color=colors.get(algorithm),
+            linestyle=lines_styles.get(algorithm, "-"),
+            marker=markers.get(algorithm),
+            markevery=15
+        )
+
+    ax.set_facecolor('#f9f9f9')
+    ax.grid(True, color='gray', linestyle='--', linewidth=0.5, alpha=0.3)
+    ax.set_xlabel("Relative Time")
+    ax.set_ylabel("Average Relative HV")
+    ax.set_ylim(0, 1.05)
+
+    legend = plt.legend(frameon=True, facecolor='white', edgecolor='gray', fontsize=12)
+    legend.get_frame().set_alpha(0.8)
+    legend.get_frame().set_linewidth(0.5)
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, f"{project_name}_HV_comparison.pdf"))
+    plt.close()
+
+    print(f"Comparative relative HV plots for AYESA correctly saved in {output_dir}.")
 
 
 def individual_plot_per_algorithm(curves: dict, interpolation_points: int, colors: dict,
@@ -921,107 +1060,3 @@ def comparative_plot_per_algorithm(curves: dict, interpolation_points: int, colo
         plt.close()
 
     print(f"Comparative relative HV plots correctly saved in {output_dir}.")
-
-
-def generate_comparative_plots_per_project(all_data, output_dir: str, algorithm_labels: dict, project_labels):
-    projects = all_data["project"].unique()
-    num_projects = len(projects)
-    rows = 2
-    cols = 5
-    rows = math.ceil(num_projects / cols)
-    fig, axes = plt.subplots(rows, cols, figsize=(20, 3.5 * rows))
-    axes = axes.flatten()
-
-    handles_dict = {}
-
-    for i, project in enumerate(projects):
-        ax = axes[i]
-        project_data = all_data[all_data["project"] == project]
-
-        for num_obj in (2, 3):
-            for algorithm in ["EpsilonConstraintAlgorithm", "HybridMethodAlgorithm"]:
-                # seleccionar las filas que cumplan condiciones
-                filtered_data = project_data[
-                    (project_data["algorithm"] == algorithm) &
-                    (project_data["num_obj"] == num_obj)
-                    ]
-
-                # construir lista de hv_rel filtrando listas cuyo primer elemento sea 1
-                hv_list = [row for row in filtered_data["hv_rel"] if len(row) > 0 and row[0] != 1]
-                if not hv_list:
-                    continue
-                hv_list = [np.array(hv, dtype=float) for hv in hv_list]
-                hv_mean = np.mean(hv_list, axis=0)
-                t_interp = project_data.iloc[0]["t_rel"]
-                line, = ax.plot(t_interp, hv_mean, label=f"{algorithm_labels.get(algorithm, algorithm)}", linewidth=2)
-
-                if algorithm not in handles_dict:
-                    handles_dict[algorithm] = line
-
-        ax.set_title(project_labels.get(project, project), fontsize=24)
-        ax.set_facecolor('#f9f9f9')
-        ax.grid(True, color='gray', linestyle='--', linewidth=0.5, alpha=0.3)
-        ax.set_xlabel("Relative Time", fontsize=20)
-        ax.set_ylabel("Average Relative HV", fontsize=20)
-        ax.set_ylim(0, 1.05)
-        ax.tick_params(axis='y', labelsize=16)
-        ax.tick_params(axis='x', labelsize=16)
-        ax.grid(True, linestyle='--', alpha=0.3)
-
-    # eliminar ejes sobrantes si hay menos proyectos que subplots
-    for j in range(i + 1, len(axes)):
-        fig.delaxes(axes[j])
-
-    fig.subplots_adjust(bottom=0.12)
-
-    legend = fig.legend(
-        handles=handles_dict.values(),
-        labels=[algorithm_labels.get(a, a) for a in handles_dict.keys()],
-        loc='lower center',
-        bbox_to_anchor=(0.5, 0.02),
-        bbox_transform=fig.transFigure,
-        ncol=len(handles_dict),
-        frameon=True,
-        facecolor='white',
-        edgecolor='gray',
-        fontsize=12
-    )
-
-    legend.get_frame().set_alpha(0.8)
-    legend.get_frame().set_linewidth(0.5)
-
-    plt.tight_layout(rect=[0, 0.09, 0.9, 1.1])
-    plt.savefig(os.path.join(output_dir, "all_projects_HV_comparison.pdf"), bbox_inches='tight')
-    plt.close()
-
-    print(f"Comparative relative HV plots PER PROJECT correctly saved in {output_dir}.")
-
-
-def generate_comparative_plot_Ayesa(all_data, output_dir: str, algorithm_labels: dict):
-    project_name = "Ayesa_data"
-    proj_data = all_data[all_data["project"] == project_name]
-
-    plt.figure(figsize=(10, 6))
-    ax = plt.gca()
-    for algorithm in ["EpsilonConstraintAlgorithm", "HybridMethodAlgorithm"]:
-        hv_list = [row for row in proj_data[proj_data["algorithm"] == algorithm]["hv_rel"]]
-        if not hv_list:
-            continue
-        hv_mean = np.mean(hv_list, axis=0)
-        t_interp = proj_data.iloc[0]["t_rel"]
-        plt.plot(t_interp, hv_mean, label=f"{algorithm_labels.get(algorithm, algorithm)}", linewidth=2)
-
-    ax.set_facecolor('#f9f9f9')
-    ax.grid(True, color='gray', linestyle='--', linewidth=0.5, alpha=0.3)
-    ax.set_xlabel("Relative Time")
-    ax.set_ylabel("Average Relative HV")
-    ax.set_ylim(0, 1.05)
-
-    legend = plt.legend(frameon=True, facecolor='white', edgecolor='gray', fontsize=12)
-    legend.get_frame().set_alpha(0.8)
-    legend.get_frame().set_linewidth(0.5)
-    plt.tight_layout()
-    plt.savefig(os.path.join(output_dir, f"{project_name}_comparison.pdf"))
-    plt.close()
-
-    print(f"Comparative relative HV plots for AYESA correctly saved in {output_dir}.")
