@@ -908,39 +908,40 @@ def generate_comparative_plots_per_project(all_data, output_dir: str, colors: di
                 if algorithm not in handles_dict:
                     handles_dict[algorithm] = line
 
-        ax.set_title(project_labels.get(project, project), fontsize=24)
+        ax.set_title(project_labels.get(project, project), fontsize=26)
         ax.set_facecolor('#f9f9f9')
         ax.grid(True, color='gray', linestyle='--', linewidth=0.5, alpha=0.3)
-        ax.set_xlabel("Relative Time", fontsize=20)
-        ax.set_ylabel("Average Relative HV", fontsize=20)
         ax.set_ylim(0, 1.05)
-        ax.tick_params(axis='y', labelsize=16)
-        ax.tick_params(axis='x', labelsize=16)
+        ax.tick_params(axis='y', labelsize=22)
+        ax.tick_params(axis='x', labelsize=22)
         ax.grid(True, linestyle='--', alpha=0.3)
 
     # eliminar ejes sobrantes si hay menos proyectos que subplots
     for j in range(i + 1, len(axes)):
         fig.delaxes(axes[j])
 
-    fig.subplots_adjust(bottom=0.12)
+    fig.subplots_adjust(left=0.08, bottom=0.18)
+
+    fig.supxlabel("Relative Time", fontsize=26, y=0.15)
+    fig.supylabel("Average Relative HV", fontsize=26, x=0.06)
 
     legend = fig.legend(
         handles=handles_dict.values(),
         labels=[algorithm_labels.get(a, a) for a in handles_dict.keys()],
         loc='lower center',
-        bbox_to_anchor=(0.5, 0.02),
+        bbox_to_anchor=(0.5, 0.03),
         bbox_transform=fig.transFigure,
         ncol=len(handles_dict),
         frameon=True,
         facecolor='white',
         edgecolor='gray',
-        fontsize=12
+        fontsize=22
     )
 
     legend.get_frame().set_alpha(0.8)
     legend.get_frame().set_linewidth(0.5)
 
-    plt.tight_layout(rect=[0, 0.09, 0.9, 1.1])
+    plt.tight_layout(rect=[0.06, 0.14, 1, 1])
     plt.savefig(os.path.join(output_dir, "open_source_projects_HV_comparison.pdf"), bbox_inches='tight')
     plt.close()
 
@@ -973,11 +974,13 @@ def generate_comparative_plot_Ayesa(all_data, output_dir: str, colors: dict,
 
     ax.set_facecolor('#f9f9f9')
     ax.grid(True, color='gray', linestyle='--', linewidth=0.5, alpha=0.3)
-    ax.set_xlabel("Relative Time")
-    ax.set_ylabel("Average Relative HV")
+    ax.set_xlabel("Relative Time", fontsize=24)
+    ax.set_ylabel("Average Relative HV", fontsize=24)
     ax.set_ylim(0, 1.05)
+    ax.tick_params(axis='y', labelsize=22)
+    ax.tick_params(axis='x', labelsize=22)
 
-    legend = plt.legend(frameon=True, facecolor='white', edgecolor='gray', fontsize=12)
+    legend = plt.legend(frameon=True, facecolor='white', edgecolor='gray', fontsize=22)
     legend.get_frame().set_alpha(0.8)
     legend.get_frame().set_linewidth(0.5)
     plt.tight_layout()
