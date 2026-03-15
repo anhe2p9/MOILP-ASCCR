@@ -867,10 +867,10 @@ def generate_comparative_plots_per_project(all_data, output_dir: str, colors: di
                                            algorithm_labels: dict, project_labels):
     projects = all_data["project"].unique()
     num_projects = len(projects)
-    rows = 2
-    cols = 5
+    rows = 5
+    cols = 2
     rows = math.ceil(num_projects / cols)
-    fig, axes = plt.subplots(rows, cols, figsize=(20, 3.5 * rows))
+    fig, axes = plt.subplots(rows, cols, figsize=(15, 4 * rows))
     axes = axes.flatten()
 
     handles_dict = {}
@@ -922,14 +922,14 @@ def generate_comparative_plots_per_project(all_data, output_dir: str, colors: di
 
     fig.subplots_adjust(left=0.08, bottom=0.18)
 
-    fig.supxlabel("Relative Time", fontsize=26, y=0.15)
+    fig.supxlabel("Relative Time", fontsize=26, y=0.09)
     fig.supylabel("Average Relative HV", fontsize=26, x=0.06)
 
     legend = fig.legend(
         handles=handles_dict.values(),
         labels=[algorithm_labels.get(a, a) for a in handles_dict.keys()],
         loc='lower center',
-        bbox_to_anchor=(0.5, 0.03),
+        bbox_to_anchor=(0.5, 0.05),
         bbox_transform=fig.transFigure,
         ncol=len(handles_dict),
         frameon=True,
@@ -941,7 +941,7 @@ def generate_comparative_plots_per_project(all_data, output_dir: str, colors: di
     legend.get_frame().set_alpha(0.8)
     legend.get_frame().set_linewidth(0.5)
 
-    plt.tight_layout(rect=[0.06, 0.14, 1, 1])
+    plt.tight_layout(rect=[0.06, 0.09, 1, 1])
     plt.savefig(os.path.join(output_dir, "open_source_projects_HV_comparison.pdf"), bbox_inches='tight')
     plt.close()
 
