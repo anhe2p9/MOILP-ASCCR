@@ -23,6 +23,13 @@ Single and multi-objective Integer Linear Programming approach for Automatic Sof
   - [Additional Script](#%EF%B8%8F-additional-script)
   - [Examples](#-examples)
   - [Project Structure](#-project-structure)
+- [Batch Refactoring Module (Eclipse Plugin)](#batch-refactoring-module-eclipse-plugin)
+  - [Plugin Requirements](#-plugin-requirements)
+  - [Plugin Setup](#%EF%B8%8F-plugin-setup)
+  - [Plugin Configuration](#-plugin-configuration)
+  - [Running the Plugin](#-running-the-plugin)
+  - [How It Fits in the Pipeline](#-how-it-fits-in-the-pipeline)
+- [SonarQube Analysis \& Replication Package](#sonarqube-analysis--replication-package)
 
 
 
@@ -241,7 +248,86 @@ python main.py -n 3 -i ./instances/my_instance -a HybirdMethodAlgorithm -t 15 -o
     │   ├── __init__.py  
     │   ├── input_files_main.py  
     │   └── README.md  
+    ├── 📁 eclipse-refactoring-plugin  
+    │   └── 📁 com.refactoring.extractor  
+    │       ├── 📁 src  
+    │       │   └── com/refactoring/extractor/handlers  
+    │       ├── 📁 lib  
+    │       ├── 📁 icons  
+    │       ├── META-INF/MANIFEST.MF  
+    │       ├── plugin.xml  
+    │       ├── build.properties  
+    │       └── README.md  
+    ├── 📁 sonarqube_analysis  
+    │   ├── sonarqube_project_measures.csv  
+    │   ├── cognitive_complexity_debt_summary.csv  
+    │   └── README.md  
     ├── general_utils.py  
     ├── main.py  
     ├── README.md  
     └── requirements.txt  
+
+
+# Batch Refactoring Module (Eclipse Plugin)
+
+This module corresponds to the **batch refactoring module** described in Section 4.3 of the paper. Once the ILP Model Engine above has selected the Pareto-optimal sequence of Extract Method operations for a project, this Eclipse plugin (`com.refactoring.extractor`) physically applies them to the source code using Eclipse's own JDT/LTK refactoring engine, and writes out a refactored copy of the project plus a log of what was done. Unlike the Python engine, it is distributed as source code plus build/run instructions (no Docker image), since it must run inside a full Eclipse IDE installation.
+
+## 📦 Plugin Requirements
+
+- **Eclipse IDE, 2026-06 release (Platform 4.40.0)** — this is not just a recommendation: the plugin imports the internal package `org.eclipse.jdt.internal.corext.refactoring.code` (marked `x-internal` in `MANIFEST.MF`), which is *not* a stable public API and can change between Eclipse releases without notice. Running this on a different Eclipse version may fail to compile or to behave correctly.
+- The **Plug-in Development Environment (PDE)** feature (to import/run/export the project) and the **Eclipse Java Development Tools (JDT)** feature.
+- **JDK 21** (`Bundle-RequiredExecutionEnvironment: JavaSE-21`).
+- The exact bundle versions this plugin was built against (from `META-INF/MANIFEST.MF`), useful if you need to check your installed Eclipse has compatible versions via *Help → About Eclipse IDE → Installation Details → Plug-ins*:
+
+  | Bundle | Version |
+  |---|---|
+  | `org.eclipse.core.resources` | 3.23.100 |
+  | `org.eclipse.core.runtime` | 3.34.100 |
+  | `org.eclipse.jdt.core` | 3.44.0 |
+  | `org.eclipse.jdt.ui` | 3.36.0 |
+  | `org.eclipse.jdt.core.manipulation` | 1.23.200 |
+  | `org.eclipse.jdt.launching` | 3.24.0 |
+  | `org.eclipse.jface.text` | 3.29.0 |
+  | `org.eclipse.ltk.core.refactoring` | 3.15.100 |
+  | `org.eclipse.ltk.ui.refactoring` | 3.13.700 |
+
+  Bundled third-party libraries (already included under `lib/`, no separate install needed): `commons-csv-1.10.0`, `jackson-core/annotations/databind 2.15.2`.
+
+## ⬇️ Plugin Setup
+
+1. Open Eclipse 2026-06 with PDE + JDT installed.
+2. **File → Import… → General → Existing Projects into Workspace**, and select the `eclipse-refactoring-plugin/com.refactoring.extractor` folder from this repository.
+3. Eclipse should resolve all dependencies automatically against your installed Eclipse platform (no external Maven/Tycho build is used — this is a plain PDE plugin project, compiled/run directly from the IDE). If you see unresolved dependency errors, check the version table above against *Help → About → Installation Details*.
+
+## 🔧 Plugin Configuration
+
+Unlike a finished, parameterized tool, the extraction target and options are currently **hardcoded** at the top of `src/com/refactoring/extractor/handlers/SampleHandler.java` (`execute()` method). Before each run, edit these fields:
+
+| Field | Meaning |
+|---|---|
+| `projectSourceDir` | Path to the target project — a folder **or** a `.zip` of it. The original is never modified: a working copy is made in a sibling `<project>_refactored_<targetAlgo>` folder. |
+| `targetAlgo` | Which algorithm's solution to apply: `"EpsilonConstraintAlgorithm"` (AUGMECON) or `"HybridMethodAlgorithm"` (Hybrid Method). |
+| `userPriority` | Objective priority order, e.g. `["loc", "extractions", "cc"]`, used to pick the lexicographic-optimal solution from the Pareto front (see Section 4.3 / "Selection and Injection of Transformations"). |
+| `targetClass` | Optional: restrict to a single class (e.g. `"JSON.java"`); leave `""` to process the whole project. |
+| `targetSubmodule` | Optional: restrict to a submodule/subfolder of a multi-module project; leave `""` for the whole project. |
+| `resultsBaseDir` | Where the refactored output and the run log are written. |
+
+**Known limitation:** this configuration step is manual (edit source + relaunch), not exposed via a dialog or CLI flag yet. Paths are also machine-specific (absolute paths). Anyone reproducing a run needs to edit these fields for their own machine and target project first.
+
+## 🚀 Running the Plugin
+
+1. **Run → Run As → Eclipse Application.** This launches a second, "runtime" Eclipse instance (a temporary workspace — this is the standard way to run/debug an Eclipse plugin, and is why you'll see `runtime-*` folders next to your workspaces).
+2. In that runtime instance, trigger the command either from the **Extraction** menu in the main menu bar, its toolbar button, or the keyboard shortcut **Ctrl+6** (`M1+6`).
+3. The refactoring job runs in the background (so the UI doesn't freeze); progress and any errors are printed both to the Eclipse console and to the log file under `resultsBaseDir` (named `<project>[_<class>]_<targetAlgo>-v2026-06.log`).
+4. When it finishes, the refactored project is at `<parent of projectSourceDir>/<project>_refactored_<targetAlgo>`, ready to be analyzed with SonarQube (see [SonarQube Analysis & Replication Package](#sonarqube-analysis--replication-package) below) to verify the resulting Cognitive Complexity and confirm the refactoring compiles and preserves behavior.
+
+## 🔗 How It Fits in the Pipeline
+
+The **ILP Model Engine** (Python, above) computes *which* extractions to apply and in what order; this plugin is what actually *applies* them to real source code via Eclipse's JDT/LTK refactoring APIs (semantic-preservation checks, AST manipulation), producing the refactored projects that are then re-analyzed with SonarQube.
+
+
+# SonarQube Analysis & Replication Package
+
+To validate the impact of the refactorings, all projects (originals and their AUGMECON- and Hybrid-Method-refactored counterparts) were analyzed with SonarQube, focusing on the `java:S3776` (Cognitive Complexity) rule and the resulting Technical Debt (`sqale_index`).
+
+The `sonarqube_analysis/` folder in this repository contains the exported measures (`sonarqube_project_measures.csv`, `cognitive_complexity_debt_summary.csv`) and a description of the extraction methodology. A full, reviewer-runnable replication package — a Docker Compose stack pre-loaded with all 30 analyzed projects — is published as part of the associated Zenodo record, so that the SonarQube analysis referenced in the paper can be inspected and re-verified independently (see the *Supplementary Information* section of the paper for the DOI/link).
