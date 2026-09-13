@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+   <extension
+         point="org.eclipse.ui.commands">
+      <category
+            id="com.refactoring.extractor.commands.category"
+            name="Refactoring Extraction">
+      </category>
+      <command
+            categoryId="com.refactoring.extractor.commands.category"
+            name="Run Batch Extraction"
+            id="com.refactoring.extractor.commands.runExtraction">
+      </command>
+   </extension>
+   <extension
+         point="org.eclipse.ui.handlers">
+      <handler
+            class="com.refactoring.extractor.handlers.SampleHandler"
+            commandId="com.refactoring.extractor.commands.runExtraction">
+      </handler>
+   </extension>
+   <extension
+         point="org.eclipse.ui.bindings">
+      <key
+            commandId="com.refactoring.extractor.commands.runExtraction"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            contextId="org.eclipse.ui.contexts.window"
+            sequence="M1+6">
+      </key>
+   </extension>
+   <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution
+            locationURI="menu:org.eclipse.ui.main.menu?after=additions">
+         <menu
+               id="com.refactoring.extractor.menus.extractionMenu"
+               label="Extraction"
+               mnemonic="X">
+            <command
+                  commandId="com.refactoring.extractor.commands.runExtraction"
+                  id="com.refactoring.extractor.menus.runExtraction"
+                  mnemonic="R">
+            </command>
+         </menu>
+      </menuContribution>
+      <menuContribution
+            locationURI="toolbar:org.eclipse.ui.main.toolbar?after=additions">
+         <toolbar
+               id="com.refactoring.extractor.toolbars.extractionToolbar">
+            <command
+                  id="com.refactoring.extractor.toolbars.runExtraction"
+                  commandId="com.refactoring.extractor.commands.runExtraction"
+                  icon="icons/sample.png"
+                  tooltip="Run batch cognitive-complexity extraction">
+            </command>
+         </toolbar>
+      </menuContribution>
+   </extension>
+
+</plugin>
