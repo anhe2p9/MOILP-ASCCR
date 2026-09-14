@@ -1466,6 +1466,18 @@ def generate_global_relative_hv_vs_time(
     all_data["t_abs"] = all_data["t_abs"].apply(ensure_list)
     all_data["hv_rel"] = all_data["hv_rel"].apply(ensure_list)
 
+    project_canonical = {
+    "iotbroker.cloud-java-client": "iotbroker",
+    "jmetal-algorithm": "jmetal",
+    "jmetal-core": "jmetal",
+    "jmetal-problem": "jmetal",
+    "DataLayer-DataLake-QueryExecution": "queryexecution",
+    "datalayer-datalake-queryexecution": "queryexecution",
+    "query-execution": "queryexecution",
+    "moeaframework": "MOEAFramework",
+    }
+    all_data["project"] = all_data["project"].replace(project_canonical)
+
     # Calculamos el tiempo total de cada ejecución para los filtros
     all_data['run_max_time'] = all_data['t_abs'].apply(lambda x: x[-1] if len(x) > 0 else 0)
 
@@ -1497,17 +1509,25 @@ def generate_global_relative_hv_vs_time(
     }
 
     project_labels = {
-        "gestion-expedientes": "ASDA project",  # Actualizado a ASDA para que coincida
-        "bytecode-viewer": "Bytecode-Viewer",
-        "cybercaptor-server": "Cybercaptor-Server",
-        "fastjson": "FastJson",
-        "fiware-commons": "Fiware-Commons",
-        "iotbroker": "IOTBroker",
-        "jmetal": "JMetal",
-        "jedis": "Jedis",
-        "knowage-core": "Knowage-core",
-        "MOEAFramework": "MOEA-Framework",
-        "queryexecution": "Query-Execution"
+    "bytecode-viewer": "Bytecode-Viewer",
+    "cybercaptor-server": "Cybercaptor-Server",
+    "fastjson": "FastJson",
+    "fiware-commons": "Fiware-Commons",
+    "iotbroker": "IOTBroker",
+    "iotbroker.cloud-java-client": "IOTBroker",
+    "jedis": "Jedis",
+    "jmetal": "JMetal",
+    "jmetal-core": "JMetal",
+    "jmetal-problem": "JMetal",
+    "jmetal-algorithm": "JMetal",
+    "knowage-core": "Knowage-core",
+    "moeaframework": "MOEA-Framework",
+    "MOEAFramework": "MOEA-Framework",
+    "queryexecution": "Query-Execution",
+    "query-execution": "Query-Execution",
+    "DataLayer-DataLake-QueryExecution": "Query-Execution",
+    "datalayer-datalake-queryexecution": "Query-Execution",
+    "gestion-expedientes": "ASDA project"
     }
 
     algorithm_labels = {
