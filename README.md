@@ -108,14 +108,15 @@ python main.py [OPTIONS]
 | `--solve`                   | (Optional) FOR ONE OBJECTIVE: it tries to solve the model.                                                                                                                                        |
 | `--plot`                    | (Optional) Plot the result of a specific experiment.                                                                                                                                              |
 | `--3dPF`                    | (Optional) Plot the 3D PF of the given result.                                                                                                                                                    |
-| `--relHV`                   | (Optional) Plots the relative HV with respect time of the given result.                                                                                                                           |
+| `--relHV`                   | (Optional) FOR MULTI-OBJECTIVE: plots the relative hypervolume vs. time of the run just executed in the same command (requires `-n`, `-i`, `-a`, etc. to generate new results first).                |
 | `--all_plots`               | (Optional) Plot all results in the given directory.                                                                                                                                               |
 | `--all_3dPF`                | (Optional) Plot all 3D PFs in a given directory.                                                                                                                                                  |
-| `--all_relHV`               | (Optional) Plots all relative HVs with respect time in a given directory.                                                                                                                         |
+| `--all_relHV`               | (Optional) Generates the relative-hypervolume-vs-time plot for *every* already-computed multi-objective result found under `--input` (no new optimization is run). Useful for batch post-processing of previous experiments.                                                          |
 | `--statistics`              | (Optional) Generate a CSV file with statistics for all results in the given directory.                                                                                                            |
 | `--input`                   | (Optional) Input directory for results (used for plotting/statistics). Defaults to `output/results`.                                                                                              |
 | `--output`                  | (Optional) Output directory for plots/statistics. Defaults to `output/plots_and_statistics`.                                                                                                      |
 | `--save`                    | (Optional) Save current configuration to a `.ini` file.                                                                                                                                           |
+> ℹ️ `--relHV`, `--3dPF` and `--plot` act on the result of the optimization launched in the same command. Their `--all_*` counterparts (`--all_relHV`, `--all_3dPF`, `--all_plots`) instead post-process every previously saved result under `--input`, without running any new optimization.
 
 
 
@@ -215,6 +216,11 @@ python main.py -n 2 -i ./instances/my_instance -a WeightedSumAlgorithm -t 2 -s 6
 This command generates the solution for three-objectives ILP problem with hybrid method algorithm for three objectives, and it also generates the parallel coordinates plot and the complete Pareto front in three dimensions:
 ```bash
 python main.py -n 3 -i ./instances/my_instance -a HybirdMethodAlgorithm -t 15 -o extractions,cc,loc --plot --3dPF
+```
+
+This command generates the relative hypervolume vs. time plot for every multi-objective result already stored under `output/results`, saving the plots to `output/plots_and_statistics`:
+```bash
+python main.py --all_relHV --input output/results --output output/plots_and_statistics
 ```
 
 
