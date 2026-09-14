@@ -215,6 +215,15 @@ public class ASTModifier {
                         continue;
                     }
 
+            // 🆕 Medición de tiempo/offsets/nombre de ESTA extracción concreta, para el CSV de tiempos.
+            // Se usan arrays de tamaño 1 como "contenedores mutables" para poder actualizarlos dentro
+            // del try y seguir leyéndolos en el finally, pase lo que pase (éxito, fallo, o abandono
+            // para reintentar tras un conflicto de variables).
+            long extractionStartTime = System.currentTimeMillis();
+            int[] loggedOffsets = { pos.getOffset(), pos.getOffset() + pos.getLength() };
+            String[] loggedName = { null };
+
+            try {
             int currentOffset = pos.getOffset();
             int currentLength = pos.getLength();
             int requestedOffset = currentOffset;
@@ -228,17 +237,18 @@ public class ASTModifier {
 
             String cleanOrigName = origName.replaceAll("[^a-zA-Z0-9_]", "");
             if (cleanOrigName.isEmpty()) {
-                cleanOrigName = "extracted_method";
+                cleanOrigName = "extractedMethod";
             } else {
                 cleanOrigName = Character.toLowerCase(cleanOrigName.charAt(0)) + cleanOrigName.substring(1);
                 if (Character.isDigit(cleanOrigName.charAt(0))) {
-                    cleanOrigName = "m_" + cleanOrigName;
+                    cleanOrigName = "m" + cleanOrigName;
                 }
             }
 
             int count = methodCounters.getOrDefault(cleanOrigName, 1);
-            String newMethodName = cleanOrigName + "_extracted_" + count;
+            String newMethodName = cleanOrigName + "Extracted" + count;
             methodCounters.put(cleanOrigName, count + 1);
+            loggedName[0] = newMethodName;
 
             // =================================================================
             // INICIO: PASO 1 - SELECCIÓN SEMÁNTICA BASADA EN NODOS AST
@@ -270,6 +280,8 @@ public class ASTModifier {
 
             currentOffset = semanticRange[0];
             currentLength = semanticRange[1];
+            loggedOffsets[0] = currentOffset;
+            loggedOffsets[1] = currentOffset + currentLength;
             int deltaStart = Math.abs(currentOffset - requestedOffset);
             int deltaEnd = Math.abs((currentOffset + currentLength) - (requestedOffset + requestedLength));
             if (deltaStart > 5 || deltaEnd > 5) {
@@ -423,6 +435,14 @@ public class ASTModifier {
 	                ext.succeeded = false;
 	                ext.failReason = "Excepción interna: " + e.getMessage();
 	            }
+            } finally {
+                // 🆕 Se registra SIEMPRE, sea cual sea la salida de esta iteración (éxito, fallo,
+                // o abandono para reintentar tras un conflicto de variables detectado más arriba).
+                ext.executionTimeMs = System.currentTimeMillis() - extractionStartTime;
+                ext.extractedMethodName = loggedName[0];
+                ext.appliedStartOffset = loggedOffsets[0];
+                ext.appliedEndOffset = loggedOffsets[1];
+            }
 	        } // Fin del bucle 3 (for int i : extIndices)
 	        
 	        // --- NUEVO: Control del bucle de intentos ---

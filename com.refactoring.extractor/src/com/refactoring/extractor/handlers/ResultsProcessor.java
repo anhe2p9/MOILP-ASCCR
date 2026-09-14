@@ -32,6 +32,14 @@ public class ResultsProcessor {
         public String originalMethodName;
         public String failReason = "";
 
+        // 🆕 Metadatos para el CSV de tiempos de extracción (ver ASTModifier.processFileWithJFace).
+        // Se rellenan durante el procesado; -1 / null mientras la extracción no se ha intentado todavía
+        // (p.ej. si se descartó antes de empezar por tener una posición inválida).
+        public String extractedMethodName;   // nombre real del método extraído, p.ej. "decodeFast_extracted_2"
+        public int appliedStartOffset = -1;  // offset de inicio realmente aplicado (tras el ajuste semántico AST)
+        public int appliedEndOffset = -1;    // offset de fin realmente aplicado
+        public long executionTimeMs = -1;    // tiempo que tardó en procesarse esta extracción concreta
+
         public Extraction(int[] range, Integer origIdx, int depth, String originalMethodName) {
             this.range = range;
             this.origIdx = origIdx;
@@ -133,9 +141,16 @@ public class ResultsProcessor {
 	            // Añadimos .replace("-", "/") para corregir el formateo sucio de los CSVs
 	            String realClassPath = baseCp.replace(".", "/").replace("-", "/") + ".java";
 
+                // 🔧 FIX: se usa 'method' (nombre + línea, p.ej. "extract-148") como clave del mapa,
+                // NO 'cleanMethod' (solo "extract"). Usar el nombre "pelado" aquí fusionaba las
+                // sobrecargas (mismo nombre, distinta línea) en una única entrada del mapa, lo que
+                // hacía que "Métodos originales a procesar" y el resumen final ("Total procesados")
+                // contasen menos métodos de los que realmente se procesaban. 'cleanMethod' se sigue
+                // usando dentro de cada Extraction (originalMethodName) para la búsqueda del método
+                // real en el AST, donde sí debe ir sin el sufijo de línea.
                 classOffsetsMap.putIfAbsent(realClassPath, new HashMap<>());
-                classOffsetsMap.get(realClassPath).putIfAbsent(cleanMethod, new ArrayList<>());
-                classOffsetsMap.get(realClassPath).get(cleanMethod).addAll(methodExtractions);
+                classOffsetsMap.get(realClassPath).putIfAbsent(method, new ArrayList<>());
+                classOffsetsMap.get(realClassPath).get(method).addAll(methodExtractions);
 
             } catch (Exception e) {
                 // Silenciamos fallos puntuales de lectura de CSV igual que en Python
