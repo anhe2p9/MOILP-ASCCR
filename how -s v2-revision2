@@ -1,0 +1,50 @@
+[33mtag v2-revision2[m
+Tagger: anhe2p9 <adriana_nh@uma.es>
+Date:   Sat Sep 19 10:30:24 2026 +0200
+
+Second revision submission
+
+Version of the manuscript "Multi-objective Integer Linear Programming
+approach for Automatic Software Cognitive Complexity Reduction"
+submitted for the second round of review.
+
+Authors: A. Novoa-Hurtado, R. Saborido, F. Chicano, M. Giménez-Medina.
+
+[33mcommit 614a5c24ea9e2d6e1385825f93f661c983226aa0[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;33mtag: [m[1;33mv2-revision2[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: anhe2p9 <adriana_nh@uma.es>
+Date:   Tue Sep 15 01:11:27 2026 +0200
+
+    New Eclipse plugin files
+
+[1mdiff --git a/com.refactoring.extractor/bin/.gitignore b/com.refactoring.extractor/bin/.gitignore[m
+[1mdeleted file mode 100644[m
+[1mindex c2d9872..0000000[m
+[1m--- a/com.refactoring.extractor/bin/.gitignore[m
+[1m+++ /dev/null[m
+[36m@@ -1 +0,0 @@[m
+[31m-/com/[m
+[1mdiff --git a/com.refactoring.extractor/bin/com/refactoring/extractor/handlers/ASTModifier$1.class b/com.refactoring.extractor/bin/com/refactoring/extractor/handlers/ASTModifier$1.class[m
+[1mdeleted file mode 100644[m
+[1mindex 697c893..0000000[m
+Binary files a/com.refactoring.extractor/bin/com/refactoring/extractor/handlers/ASTModifier$1.class and /dev/null differ
+[1mdiff --git a/com.refactoring.extractor/bin/com/refactoring/extractor/handlers/ASTModifier$2$1.class b/com.refactoring.extractor/bin/com/refactoring/extractor/handlers/ASTModifier$2$1.class[m
+[1mdeleted file mode 100644[m
+[1mindex 5c03689..0000000[m
+Binary files a/com.refactoring.extractor/bin/com/refactoring/extractor/handlers/ASTModifier$2$1.class and /dev/null differ
+[1mdiff --git a/com.refactoring.extractor/bin/com/refactoring/extractor/handlers/ASTModifier$2.class b/com.refactoring.extractor/bin/com/refactoring/extractor/handlers/ASTModifier$2.class[m
+[1mdeleted file mode 100644[m
+[1mindex e824e36..0000000[m
+Binary files a/com.refactoring.extractor/bin/com/refactoring/extractor/handlers/ASTModifier$2.class and /dev/null differ
+[1mdiff --git a/com.refactoring.extractor/bin/com/refactoring/extractor/handlers/ASTModifier.class b/com.refactoring.extractor/bin/com/refactoring/extractor/handlers/ASTModifier.class[m
+[1mindex 025c354..4b88d97 100644[m
+Binary files a/com.refactoring.extractor/bin/com/refactoring/extractor/handlers/ASTModifier.class and b/com.refactoring.extractor/bin/com/refactoring/extractor/handlers/ASTModifier.class differ
+[1mdiff --git a/com.refactoring.extractor/bin/com/refactoring/extractor/handlers/SampleHandler$1.class b/com.refactoring.extractor/bin/com/refactoring/extractor/handlers/SampleHandler$1.class[m
+[1mdeleted file mode 100644[m
+[1mindex 4835e34..0000000[m
+Binary files a/com.refactoring.extractor/bin/com/refactoring/extractor/handlers/SampleHandler$1.class and /dev/null differ
+[1mdiff --git a/com.refactoring.extractor/bin/com/refactoring/extractor/handlers/SampleHandler$DualPrintStream.class b/com.refactoring.extractor/bin/com/refactoring/extractor/handlers/SampleHandler$DualPrintStream.class[m
+[1mindex 026978b..10e8e35 100644[m
+Binary files a/com.refactoring.extractor/bin/com/refactoring/extractor/handlers/SampleHandler$DualPrintStream.class and b/com.refactoring.extractor/bin/com/refactoring/extractor/handlers/SampleHandler$DualPrintStream.class differ
+[1mdiff --git a/com.refactoring.extractor/bin/com/refactoring/extractor/handlers/SampleHandler.class b/com.refactoring.extractor/bin/com/refactoring/extractor/handlers/SampleHandler.class[m
+[1mindex 4fa7c53..d7d11c1 100644[m
+Binary files a/com.refactoring.extractor/bin/com/refactoring/extractor/handlers/SampleHandler.class and b/com.refactoring.extractor/bin/com/refactoring/extractor/handlers/SampleHandler.class differ
