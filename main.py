@@ -364,12 +364,11 @@ def obtain_arguments():
                              f' and if there is no input path, the output path will be the general "output/results" '
                              f'folder for all results.')
     parser.add_argument('--output', dest='output_dir', type=str, default=None,
-                        help=f'The output path for plots and/or statistics can be specified,'
-                             f' and if there is no output path, the output path will be the general'
-                             f' "output/plots_and_statistics" folder for all results.')
+                        help=f'GLOBAL output folder: where --all_plots, --statistics, --all_3dPF and --all_relHV'
+                             f' save their results. It does not affect a single execution (see --results_dir).')
     parser.add_argument('--results_dir', dest='results_dir', type=str, default=None,
-                        help=f'Base folder where the optimization results (CSV, TXT and 3D PF HTML) are saved.'
-                             f' If not given, "output/results" is used.')
+                        help=f'Folder for a SINGLE execution: optimization results (CSV, TXT) and its individual'
+                             f' plots (--plot, --3dPF, --relHV). If not given, "output/results/<project>" is used.')
     parser.add_argument('--save', action='store_true', help='Save properties in a .ini file')
     parser.add_argument('-tl', '--timelimit', dest='time_limit', type=int, default=3600,
                         help=f'Maximum desired time for problem resolution.')

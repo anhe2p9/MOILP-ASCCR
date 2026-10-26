@@ -108,15 +108,17 @@ python main.py [OPTIONS]
 | `--solve`                   | (Optional) FOR ONE OBJECTIVE: it tries to solve the model.                                                                                                                                        |
 | `--plot`                    | (Optional) Plot the result of a specific experiment.                                                                                                                                              |
 | `--3dPF`                    | (Optional) Plot the 3D PF of the given result.                                                                                                                                                    |
+| `--show`                    | (Optional) Open the interactive 3D PF HTML in the web browser once generated. If not given, the HTML is saved but not opened.                                                                     |
 | `--relHV`                   | (Optional) FOR MULTI-OBJECTIVE: plots the relative hypervolume vs. time of the run just executed in the same command (requires `-n`, `-i`, `-a`, etc. to generate new results first).                |
 | `--all_plots`               | (Optional) Plot all results in the given directory.                                                                                                                                               |
 | `--all_3dPF`                | (Optional) Plot all 3D PFs in a given directory.                                                                                                                                                  |
 | `--all_relHV`               | (Optional) Generates the relative-hypervolume-vs-time plot for *every* already-computed multi-objective result found under `--input` (no new optimization is run). Useful for batch post-processing of previous experiments.                                                          |
 | `--statistics`              | (Optional) Generate a CSV file with statistics for all results in the given directory.                                                                                                            |
-| `--input`                   | (Optional) Input directory for results (used for plotting/statistics). Defaults to `output/results`.                                                                                              |
-| `--output`                  | (Optional) Output directory for plots/statistics. Defaults to `output/plots_and_statistics`.                                                                                                      |
+| `--results_dir`             | (Optional) Folder for a **single execution**: optimization results (CSV, TXT) and its individual plots (`--plot`, `--3dPF`, `--relHV`). If not given, `output/results/<project>` is used.        |
+| `--input`                   | (Optional) **Global** input directory for results (used by `--all_plots`, `--all_3dPF`, `--all_relHV` and `--statistics`). Defaults to `output/results`.                                          |
+| `--output`                  | (Optional) **Global** output directory for plots/statistics (used by `--all_plots`, `--all_3dPF`, `--all_relHV` and `--statistics`). Defaults to `output/plots_and_statistics`. It does not affect a single execution (see `--results_dir`). |
 | `--save`                    | (Optional) Save current configuration to a `.ini` file.                                                                                                                                           |
-> ℹ️ `--relHV`, `--3dPF` and `--plot` act on the result of the optimization launched in the same command. Their `--all_*` counterparts (`--all_relHV`, `--all_3dPF`, `--all_plots`) instead post-process every previously saved result under `--input`, without running any new optimization.
+> ℹ️ `--relHV`, `--3dPF` and `--plot` act on the result of the optimization launched in the same command, and save their files in `--results_dir` (or in the default path if it is not given). Their `--all_*` counterparts (`--all_relHV`, `--all_3dPF`, `--all_plots`) instead post-process every previously saved result under `--input`, without running any new optimization, and save their files in `--output`.
 
 
 
@@ -216,6 +218,11 @@ python main.py -n 2 -i ./instances/my_instance -a WeightedSumAlgorithm -t 2 -s 6
 This command generates the solution for three-objectives ILP problem with hybrid method algorithm for three objectives, and it also generates the parallel coordinates plot and the complete Pareto front in three dimensions:
 ```bash
 python main.py -n 3 -i ./instances/my_instance -a HybirdMethodAlgorithm -t 15 -o extractions,cc,loc --plot --3dPF
+```
+
+This command does the same as the previous one, but saves the results of this single execution in a specific folder (`--results_dir`) and opens the interactive 3D Pareto front in the browser (`--show`):
+```bash
+python main.py -n 3 -i ./instances/my_instance -a HybirdMethodAlgorithm -t 15 -o extractions,cc,loc --3dPF --results_dir ./my_results --show
 ```
 
 This command generates the relative hypervolume vs. time plot for every multi-objective result already stored under `output/results`, saving the plots to `output/plots_and_statistics`:
