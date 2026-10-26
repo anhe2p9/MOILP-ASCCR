@@ -6,6 +6,8 @@ import textwrap
 import tree_sitter_java as tsjava
 from tree_sitter import Language, Parser
 from concurrent.futures import ThreadPoolExecutor
+import webbrowser
+from pathlib import Path
 
 import os
 # Forzar a Matplotlib a usar un backend que no sea GUI (antes de que se cargue)
@@ -39,7 +41,7 @@ client = OpenAI(api_key=API_KEY)
 
 
 def generate_3d_pf_and_parallel_coordinates_plot(objectives_list, complete_data_file, output_html_path,
-                                                 refact_cache_file, original_class_file):
+                                                 refact_cache_file, original_class_file, show=False):
     df = pd.read_csv(complete_data_file)
 
     if df.shape[0] == 0:
@@ -81,6 +83,10 @@ def generate_3d_pf_and_parallel_coordinates_plot(objectives_list, complete_data_
         f.write(html_contenido)
     print("[OK] Script de redirección web inyectado con éxito en el frente de Pareto.")
 
+    # Abrir el frente de Pareto interactivo en el navegador solo si se pide con --show
+    if show:
+        webbrowser.open(Path(output_html_path).resolve().as_uri())
+
 
 def create_refactoring_files(complete_data_file, output_html_path, solutions, refact_cache_file,
                              original_class_file, orden_objetivos):
@@ -104,7 +110,7 @@ def create_refactoring_files(complete_data_file, output_html_path, solutions, re
         complete_data_file, refact_cache_file, root_node, codigo_bytes, mapa_offsets
     )
 
-    print(f"DESFASE GLOBAL: {desfase_global}.")
+    # print(f"DESFASE GLOBAL: {desfase_global}.")
 
     # 2. Generamos los enlaces calculando la ruta relativa respecto al HTML del gráfico
     carpeta_output = os.path.dirname(output_html_path)
@@ -198,7 +204,7 @@ def generar_explicacion_metodo_openai(codigo_original, codigo_refactorizado, fil
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
-        print(f"[Error OpenAI] No se pudo obtener la justificación: {e}")
+        # print(f"[Error OpenAI] No se pudo obtener la justificación: {e}")
         return "Solución estructurada basada en los objetivos de optimización del Frente de Pareto."
 
 
@@ -678,7 +684,7 @@ def generar_nombre_metodo_openai(codigo_metodo, nombres_usados):
         nombre_limpio = re.sub(r'[^a-zA-Z0-9_]', '', nombre)
         return nombre_limpio if nombre_limpio else "metodoExtraido"
     except Exception as e:
-        print(f"[Error OpenAI] No se pudo obtener el nombre: {e}")
+        # print(f"[Error OpenAI] No se pudo obtener el nombre: {e}")
         return "metodoExtraido"
 
 

@@ -220,6 +220,8 @@ def load_config(file=PROPERTIES_FILE):
             parameters["weights"] = section["weights"]
         if "second_obj" in section:
             parameters["second_obj"] = section["second_obj"]
+        if "results_dir" in section:
+            parameters["results_dir"] = section["results_dir"]
 
     return parameters
 
@@ -365,6 +367,9 @@ def obtain_arguments():
                         help=f'The output path for plots and/or statistics can be specified,'
                              f' and if there is no output path, the output path will be the general'
                              f' "output/plots_and_statistics" folder for all results.')
+    parser.add_argument('--results_dir', dest='results_dir', type=str, default=None,
+                        help=f'Base folder where the optimization results (CSV, TXT and 3D PF HTML) are saved.'
+                             f' If not given, "output/results" is used.')
     parser.add_argument('--save', action='store_true', help='Save properties in a .ini file')
     parser.add_argument('-tl', '--timelimit', dest='time_limit', type=int, default=3600,
                         help=f'Maximum desired time for problem resolution.')
@@ -376,6 +381,8 @@ def obtain_arguments():
                         default=None, help=f'Path to the folder with files about solution needed'
                                            f' if the instance is already solved and '
                                            f'one just wants to represent the solution.')
+    parser.add_argument('--show', action='store_true',
+                        help='Open the interactive 3D PF HTML in the web browser once generated.')
     
     args = parser.parse_args()
     parameters = vars(args)
@@ -472,7 +479,20 @@ def run_optimization(config, objectives, weights):
     elif num_objs > 1 and model_instance:
         check_threshold(model_instance, threshold)
         method_name, class_name, project_name = get_all_path_names(instance_path)
-        general_path = f"output/results/{project_name}/{ilp_algorithm}_{'-'.join(objectives)}_{class_name}_{method_name}/{method_name}"
+
+        results_dir = config.get('results_dir')
+        if results_dir:
+            # Carpeta elegida por el usuario: sin subcarpeta de proyecto
+            base_output = results_dir
+        else:
+            # Comportamiento original
+            base_output = os.path.join("output/results", project_name)
+
+        general_path = os.path.join(
+            base_output,
+            f"{ilp_algorithm}_{'-'.join(objectives)}_{class_name}_{method_name}",
+            method_name,
+        )
 
         main_multiobjective(num_objs, ilp_algorithm, instance_path, general_path,
                             threshold, config.get('subdivisions'), weights, objectives, time_limit)
@@ -488,7 +508,7 @@ def run_optimization(config, objectives, weights):
 def generate_plots_and_stats(config, objectives, general_path, args):
     """Generates all plots and statistics configured by the user."""
     # Input/Output paths
-    input_dir = config.get('input_dir', "output/results")
+    input_dir = config.get('input_dir') or config.get('results_dir') or "output/results"
     output_dir = config.get('output_dir')
     if not output_dir and input_dir:
         output_dir = str(Path(input_dir).parent)
@@ -517,7 +537,8 @@ def generate_plots_and_stats(config, objectives, general_path, args):
                 import utils.interactive_3DPF_with_solutions as interactive_3dpf
                 interactive_3dpf.generate_3d_pf_and_parallel_coordinates_plot(objectives, complete_data_path,
                                                                               output_html_path, refact_cache,
-                                                                              original_class)
+                                                                              original_class,
+                                                                              show=args["show"])
             else:
                 results_utils.generate_3d_pf_plot(results_csv_path, f"{general_path}_3DPF.html")
 
@@ -608,7 +629,7 @@ def main():
             print("All files successfully found!")
             output_html = f"{solution_path}/{solution_path.name}_interactive_3dPF.html"
             interactive_3dpf.generate_3d_pf_and_parallel_coordinates_plot(objectives, complete, output_html, cache,
-                                                                          orig_class)
+                                                                          orig_class, show=args["show"])
         except Exception as e:
             print(f"❌ Error handling solution_path: {e}")
 
